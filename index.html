@@ -205,11 +205,11 @@ main{padding:12px;max-width:760px;margin:0 auto}
 "use strict";
 var CFG = window.CFG;
 var BUCKETS = [
-  ['TOUR',   'Tourney', 4],
-  ['COMP',   'Comp',    3],
-  ['FENCE',  'Fence',   2],
+  ['NO',     'No',      0],
   ['SOCIAL', 'Social',  1],
-  ['NO',     'No',      0]
+  ['FENCE',  'Fence',   2],
+  ['COMP',   'Comp',    3],
+  ['TOUR',   'Tourney', 4]
 ];
 var BVAL = {}, BLABEL = {};
 BUCKETS.forEach(function (b) { BVAL[b[0]] = b[2]; BLABEL[b[0]] = b[1]; });
@@ -392,7 +392,7 @@ function score(vs, prior) {
 function nearestBucket(mean) {
   var best = BUCKETS[0];
   BUCKETS.forEach(function (b) {
-    if (Math.abs(b[2] - mean) < Math.abs(best[2] - mean)) best = b;
+    if (Math.abs(b[2] - mean) <= Math.abs(best[2] - mean)) best = b;
   });
   return best[0];
 }
@@ -428,9 +428,15 @@ function payDot(p) {
 
 function viewCheckin() {
   var sel = currentSession(), q = S.q.toLowerCase().trim();
-  var pool = q ? S.players.filter(function (p) { return matches(p, q); })
-               : S.players.filter(function (p) { return inSession(p, sel); });
   var slotted = S.players.filter(function (p) { return inSession(p, sel); });
+  /* 61 players never picked a slot, and people turn up at the wrong session --
+     scoping search to this session outright would make them unfindable. */
+  var away = q ? S.players.filter(function (p) {
+    return !inSession(p, sel) && matches(p, q);
+  }) : [];
+  var pool = (q ? slotted.filter(function (p) { return matches(p, q); })
+                : slotted).concat(away);
+  var divider = away.length ? pool.length - away.length : -1;
   var here = slotted.filter(function (p) { return p.present; }).length;
   var owe = slotted.filter(function (p) { return p.present && p.paid !== 'paid'; }).length;
 
@@ -439,14 +445,14 @@ function viewCheckin() {
     + '" autocomplete="off" autocorrect="off" spellcheck="false">'
     + '<div class="count"><b>' + here + '</b> of ' + slotted.length + ' here'
     + (owe ? '<span class="tag warn">' + owe + ' to collect</span>' : '')
-    + (q ? '<span class="spacer"></span><span>all ' + S.players.length + '</span>' : '')
     + '</div><div class="list">';
 
   if (!pool.length) h += '<div class="empty">'
     + (!S.lastPull ? 'Loading…'
        : q ? 'No one by that name.' : 'No one in this session.') + '</div>';
 
-  pool.forEach(function (p) {
+  pool.forEach(function (p, i) {
+    if (i === divider) h += '</div><div class="count">other sessions</div><div class="list">';
     var wrong = p.slot && p.slot !== sel;
     var needPay = p.present && p.paid !== 'paid';
     h += '<div class="wrap"><div class="row ' + (p.present ? 'on' : '') + '" data-ci="' + esc(p.id) + '">'
@@ -472,8 +478,11 @@ function viewCheckin() {
 function viewEval() {
   var sel = currentSession(), q = S.q.toLowerCase().trim(), byP = voteMap();
   var pool = S.players.filter(function (p) {
-    return q ? matches(p, q) : (inSession(p, sel) && p.present);
+    return inSession(p, sel) && (q ? matches(p, q) : p.present);
   });
+  var away = q ? S.players.filter(function (p) {
+    return !inSession(p, sel) && matches(p, q);
+  }) : [];
   var mine = function (p) {
     return (byP[p.id] || []).filter(function (v) { return v.who === S.who; })[0];
   };
@@ -496,12 +505,14 @@ function viewEval() {
       return ar - br || (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);
     });
   }
-  var done = pool.filter(mine).length;
+  var done = pool.filter(mine).length, inSess = pool.length;
+  var divider = away.length ? inSess : -1;
+  pool = pool.concat(away);
 
   var h = segHTML(sel)
     + '<input id="q" placeholder="Search by name" value="' + esc(S.q)
     + '" autocomplete="off" autocorrect="off" spellcheck="false">'
-    + '<div class="count"><b>' + done + '</b> of ' + pool.length + ' done</div>'
+    + '<div class="count"><b>' + done + '</b> of ' + inSess + ' done</div>'
     + '<div class="list">';
 
   if (!pool.length) {
@@ -509,7 +520,8 @@ function viewEval() {
       : q ? 'No one by that name.' : 'Check people in first.') + '</div>';
   }
 
-  pool.forEach(function (p) {
+  pool.forEach(function (p, i) {
+    if (i === divider) h += '</div><div class="count">other sessions</div><div class="list">';
     var all = byP[p.id] || [], my = mine(p);
     var others = all.filter(function (v) { return v.who !== S.who; });
     var show = !CFG.BLIND || my;
