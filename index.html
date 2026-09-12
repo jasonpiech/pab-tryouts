@@ -105,6 +105,8 @@ main{padding:12px;max-width:760px;margin:0 auto}
   border-radius:11px;margin:-2px 0 0;padding:9px 11px;display:flex;
   align-items:center;gap:9px;font-size:12.5px;color:var(--amber)}
 .money .grow{color:var(--dim)}
+.money.ok{border-color:var(--line);color:var(--faint)}
+.money.ok button{background:none;border-color:var(--line);color:var(--dim)}
 .money button{padding:7px 11px;border-radius:9px;background:rgba(239,146,68,.16);
   border:1px solid rgba(239,146,68,.4);font-size:12px;font-weight:700;
   color:var(--amber);flex:none}
@@ -226,8 +228,8 @@ var SESSIONS = [
 /* players/votes = the server snapshot with the unsent queue replayed over it */
 var S = {
   who: '', pass: '', tab: 'checkin', sess: '', q: '',
-  srv: { players: [], votes: [] }, players: [], votes: [], queue: [],
-  open: {}, noting: {}, net: 'wait', lastPull: 0, boardFilter: 'all'
+  srv: { players: [], votes: [] }, players: [], votes: [], queue: [], applied: [],
+  open: {}, noting: {}, paidHere: {}, net: 'wait', lastPull: 0, boardFilter: 'all'
 };
 
 function LS(k, v) {
@@ -257,6 +259,7 @@ function toast(msg) {
 }
 
 function pull() {
+  var t0 = Date.now();
   var u = CFG.BACKEND
     ? CFG.BACKEND + '?action=bootstrap&pass=' + encodeURIComponent(S.pass)
     : '/api/bootstrap?pass=' + encodeURIComponent(S.pass);
@@ -269,6 +272,7 @@ function pull() {
         throw err;
       }
       S.srv = { players: d.players || [], votes: d.votes || [] };
+      S.applied = S.applied.filter(function (o) { return o.ackedAt > t0; });
       if (d.sessions && d.sessions.length) SESSIONS = d.sessions;
       LS('snap', JSON.stringify(S.srv));
       S.lastPull = Date.now();
@@ -295,10 +299,16 @@ function push() {
         err.badPass = /passcode/i.test(d.error || '');
         throw err;
       }
-      var done = {};
+      var done = {}, bad = {};
       (d.applied || []).forEach(function (id) { done[id] = 1; });
-      (d.rejected || []).forEach(function (x) { done[x.op_id] = 1; });
+      (d.rejected || []).forEach(function (x) { done[x.op_id] = 1; bad[x.op_id] = 1; });
       if ((d.rejected || []).length) console.warn('rejected ops', d.rejected);
+      S.queue.forEach(function (o) {
+        if (done[o.op_id] && !bad[o.op_id]) {
+          o.ackedAt = Date.now();
+          S.applied.push(o);
+        }
+      });
       S.queue = S.queue.filter(function (o) { return !done[o.op_id]; });
       LS('queue', JSON.stringify(S.queue));
       setNet('ok');
@@ -339,7 +349,7 @@ function rebuild() {
   var seen = {};
   S.votes.forEach(function (v) { seen[v.op_id] = 1; });
 
-  S.queue.forEach(function (o) {
+  S.applied.concat(S.queue).forEach(function (o) {
     if (o.kind === 'checkin' && by[o.player_id]) by[o.player_id].present = o.present ? 1 : 0;
     else if (o.kind === 'paid' && by[o.player_id]) by[o.player_id].paid = o.paid || 'paid';
     else if (o.kind === 'vote' && !seen[o.op_id]) {
@@ -369,6 +379,7 @@ function voteMap() {
   var byP = {};
   Object.keys(m).forEach(function (k) {
     var v = m[k];
+    if (v.bucket === 'VOID') return;
     (byP[v.pid] = byP[v.pid] || []).push(v);
   });
   return byP;
@@ -468,6 +479,9 @@ function viewCheckin() {
       h += '<div class="money"><span>$10</span><span class="grow">'
         + (p.paid === 'unpaid' ? 'unpaid on the form' : 'not marked on the form')
         + '</span><button data-paid="' + esc(p.id) + '">Collected</button></div>';
+    } else if (p.present && S.paidHere[p.id] !== undefined) {
+      h += '<div class="money ok"><span class="grow">$10 taken at the door</span>'
+        + '<button data-unpaid="' + esc(p.id) + '">undo</button></div>';
     }
     h += '</div>';
   });
@@ -546,6 +560,7 @@ function viewEval() {
       } else {
         h += '<div class="after"><button data-note="' + esc(p.id) + '">'
           + (my.comment ? '“' + esc(my.comment) + '”' : '+ note') + '</button>'
+          + '<button data-clear="' + esc(p.id) + '">clear</button>'
           + '<span class="spacer"></span>'
           + (show && others.length ? '<span>' + others.length + ' other'
               + (others.length > 1 ? 's' : '') + '</span>' : '')
@@ -649,7 +664,8 @@ function render() {
 
 document.addEventListener('click', function (e) {
   var t = e.target.closest('[data-tab],[data-sess],[data-ci],[data-paid],[data-vote] button,'
-    + '[data-note],[data-savenote],[data-open],[data-bf],#walkup,#csv,#refresh,#mechip,#sync');
+    + '[data-note],[data-savenote],[data-clear],[data-unpaid],[data-open],[data-bf],'
+    + '#walkup,#csv,#refresh,#mechip,#sync');
   if (!t) return;
   var d = t.dataset;
 
@@ -664,12 +680,27 @@ document.addEventListener('click', function (e) {
     return toast(p.name.split(' ')[0] + (p.present ? ' out' : ' in'));
   }
   if (d.paid) {
+    var pp = S.players.filter(function (x) { return x.id === d.paid; })[0];
+    S.paidHere[d.paid] = (pp && pp.paid) || 'unknown';
     op({ kind: 'paid', player_id: d.paid, paid: 'paid', method: 'door' });
     return toast('$10 in');
   }
   if (t.parentElement && t.parentElement.dataset.vote) {
-    op({ kind: 'vote', player_id: t.parentElement.dataset.vote, bucket: d.b, comment: '' });
+    var vpid = t.parentElement.dataset.vote;
+    var cur = (voteMap()[vpid] || []).filter(function (v) { return v.who === S.who; })[0];
+    if (cur && cur.bucket === d.b) return;
+    op({ kind: 'vote', player_id: vpid, bucket: d.b, comment: '' });
     return toast(BLABEL[d.b]);
+  }
+  if (d.clear) {
+    op({ kind: 'vote', player_id: d.clear, bucket: 'VOID', comment: '' });
+    return toast('cleared');
+  }
+  if (d.unpaid) {
+    op({ kind: 'paid', player_id: d.unpaid, paid: S.paidHere[d.unpaid] || 'unknown',
+         method: 'undo' });
+    delete S.paidHere[d.unpaid];
+    return toast('undone');
   }
   if (d.note) { S.noting[d.note] = 1; return render(); }
   if (d.savenote) {
