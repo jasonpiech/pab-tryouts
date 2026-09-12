@@ -1,0 +1,802 @@
+<meta charset="utf-8">
+<title>Pickleball at Berkeley — Tryouts</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#070d1a">
+<link rel="apple-touch-icon" href="logo.png">
+<style>
+:root{
+  --navy:#002677;
+  --bg:#070d1a; --card:#0f1829; --card2:#16223a; --line:#223150;
+  --ink:#e9eef8; --dim:#93a3c0; --faint:#5f7094;
+  --gold:#feb516; --green:#2bb673; --red:#e5484d; --amber:#ef9244;
+  --tour:#feb516; --comp:#2bb673; --fence:#6f9fe8; --social:#8494b4; --no:#e5484d;
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);overflow-x:hidden}
+body{font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:84px;overscroll-behavior-y:contain}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,textarea{font:inherit;color:var(--ink);background:var(--card2);
+  border:1px solid var(--line);border-radius:11px;padding:12px;width:100%}
+input:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:-1px}
+.mono{font-variant-numeric:tabular-nums}
+.hide{display:none!important}
+
+/* gate */
+#gate{max-width:380px;margin:0 auto;padding:44px 20px;position:relative}
+/* fixed width here overflows the viewport and widens the layout */
+#gate::before{content:'';position:absolute;left:0;right:0;top:-130px;height:470px;
+  pointer-events:none;z-index:-1;
+  background:radial-gradient(closest-side,rgba(0,38,119,.6),rgba(0,38,119,0))}
+#gate .mark{text-align:center;margin-bottom:26px}
+#gate .mark img{height:82px;margin-bottom:14px}
+#gate h1{font-size:21px;margin:0;letter-spacing:-.4px}
+#gate .sub{color:var(--faint);font-size:13px;margin-top:4px}
+.lbl{font-size:11px;letter-spacing:.9px;text-transform:uppercase;color:var(--faint);
+  font-weight:700;margin:22px 0 8px}
+.who-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.who-grid button{padding:14px 10px;border-radius:12px;background:var(--card);
+  border:1px solid var(--line);font-weight:650;font-size:15px}
+.who-grid button.on{background:rgba(254,181,22,.14);border-color:var(--gold);color:#fff}
+.go{width:100%;margin-top:20px;padding:15px;border-radius:12px;font-weight:750;
+  font-size:16px;background:var(--gold);color:#16181d}
+.go[disabled]{opacity:.35}
+#gate .err{color:var(--red);font-size:13px;margin-top:12px;min-height:18px}
+
+/* chrome */
+header{position:sticky;top:0;z-index:40;background:rgba(7,13,26,.95);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+  padding:10px 12px;display:flex;align-items:center;gap:10px}
+header img{height:26px}
+.brand{font-weight:750;font-size:14px;letter-spacing:-.2px;white-space:nowrap}
+.spacer{flex:1}
+.chip{font-size:11.5px;padding:5px 10px;border-radius:99px;background:var(--card2);
+  border:1px solid var(--line);color:var(--dim);white-space:nowrap;font-weight:600}
+.chip.bare{padding:5px 7px}
+.chip.bare .dot{margin-right:0}
+.chip.me{color:var(--ink)}
+.dot{width:7px;height:7px;border-radius:99px;display:inline-block;
+  background:var(--green);margin-right:6px;vertical-align:1px}
+.dot.wait{background:var(--amber)} .dot.bad{background:var(--red)}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:40;display:flex;gap:6px;
+  background:rgba(7,13,26,.97);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);padding:7px 8px calc(7px + env(safe-area-inset-bottom))}
+nav button{flex:1;padding:10px 4px;border-radius:11px;font-size:12px;
+  color:var(--faint);font-weight:700}
+nav button.on{color:#16181d;background:var(--gold)}
+main{padding:12px;max-width:760px;margin:0 auto}
+
+/* controls */
+.seg{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:10px;
+  scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none;padding:8px 11px;border-radius:10px;background:var(--card);
+  border:1px solid var(--line);font-size:12px;font-weight:650;color:var(--dim);
+  line-height:1.25;text-align:center}
+.seg button.on{background:var(--card2);border-color:var(--gold);color:var(--ink)}
+.seg button small{display:block;font-size:9.5px;color:var(--faint);font-weight:600}
+.seg button.on small{color:var(--dim)}
+.count{color:var(--faint);font-size:12px;margin:12px 2px 8px;font-weight:600;
+  display:flex;align-items:center;gap:8px}
+.count b{color:var(--ink);font-weight:750}
+
+/* rows */
+.list{display:flex;flex-direction:column;gap:7px}
+.row{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:11px 12px;display:flex;align-items:center;gap:11px}
+.row.on{border-color:rgba(43,182,115,.4);background:rgba(43,182,115,.06)}
+.nm{font-weight:650;font-size:15px;line-height:1.2;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.sub{font-size:11.5px;color:var(--faint);margin-top:2px;display:flex;gap:7px;
+  flex-wrap:wrap;align-items:center}
+.grow{flex:1;min-width:0}
+.tick{width:34px;height:34px;flex:none;border-radius:10px;display:flex;
+  align-items:center;justify-content:center;font-size:16px;font-weight:800;
+  background:var(--card2);border:1px solid var(--line);color:var(--faint)}
+.tick.on{background:rgba(43,182,115,.2);border-color:rgba(43,182,115,.5);color:var(--green)}
+.pay{width:8px;height:8px;border-radius:99px;flex:none;background:var(--faint)}
+.pay.paid{background:var(--green)} .pay.unpaid{background:var(--amber)}
+.tag{font-size:10px;padding:2px 6px;border-radius:5px;background:var(--card2);
+  border:1px solid var(--line);color:var(--dim);font-weight:650;white-space:nowrap}
+.tag.warn{border-color:rgba(239,146,68,.45);color:var(--amber)}
+.money{background:var(--card2);border:1px solid rgba(239,146,68,.35);
+  border-radius:11px;margin:-2px 0 0;padding:9px 11px;display:flex;
+  align-items:center;gap:9px;font-size:12.5px;color:var(--amber)}
+.money .grow{color:var(--dim)}
+.money button{padding:7px 11px;border-radius:9px;background:rgba(239,146,68,.16);
+  border:1px solid rgba(239,146,68,.4);font-size:12px;font-weight:700;
+  color:var(--amber);flex:none}
+.wrap{display:flex;flex-direction:column;gap:7px}
+.empty{text-align:center;color:var(--faint);padding:34px 14px;font-size:13.5px}
+.mini{width:100%;margin-top:9px;padding:11px;border-radius:11px;font-size:13px;
+  color:var(--faint);border:1px dashed var(--line);font-weight:650}
+
+/* vote */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:11px 12px}
+.card.voted{border-color:#2b3a5c}
+.chead{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.pills{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.pills button{padding:10px 2px;border-radius:10px;background:var(--card2);
+  border:1px solid var(--line);font-size:11px;font-weight:750;color:var(--dim);
+  line-height:1.15}
+.pills button.on{color:#16181d}
+.pills button[data-b=TOUR].on{background:var(--tour);border-color:var(--tour)}
+.pills button[data-b=COMP].on{background:var(--comp);border-color:var(--comp)}
+.pills button[data-b=FENCE].on{background:var(--fence);border-color:var(--fence)}
+.pills button[data-b=SOCIAL].on{background:var(--social);border-color:var(--social)}
+.pills button[data-b=NO].on{background:var(--no);border-color:var(--no);color:#fff}
+.after{display:flex;align-items:center;gap:9px;margin-top:9px;font-size:11.5px;
+  color:var(--faint)}
+.after button{color:var(--dim);font-weight:650;text-decoration:underline;
+  text-decoration-color:var(--line);text-underline-offset:3px}
+.note{display:flex;gap:7px;margin-top:9px}
+.note input{padding:10px}
+.note button{flex:none;padding:0 14px;border-radius:11px;background:var(--card2);
+  border:1px solid var(--line);font-weight:700;font-size:13px}
+.bar{display:flex;height:5px;border-radius:99px;overflow:hidden;background:var(--card2);
+  width:76px;flex:none}
+.bar i{display:block}
+.bar i.TOUR{background:var(--tour)} .bar i.COMP{background:var(--comp)}
+.bar i.FENCE{background:var(--fence)} .bar i.SOCIAL{background:var(--social)}
+.bar i.NO{background:var(--no)}
+
+/* board */
+.rank{width:26px;flex:none;text-align:right;color:var(--faint);font-size:13px;
+  font-weight:750}
+.verd{font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:6px;
+  letter-spacing:.3px;flex:none;color:#16181d}
+.verd.TOUR{background:var(--tour)} .verd.COMP{background:var(--comp)}
+.verd.FENCE{background:var(--fence)} .verd.SOCIAL{background:var(--social)}
+.verd.NO{background:var(--no);color:#fff}
+.det{border-top:1px solid var(--line);margin-top:10px;padding-top:9px;
+  display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.det .vr{display:flex;align-items:center;gap:8px}
+.det .vw{color:var(--dim);font-weight:650;width:58px;flex:none}
+.det .vc{color:var(--faint);font-size:12px;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.legend{color:var(--faint);font-size:11.5px;line-height:1.5;margin:14px 4px 0}
+.foot{display:flex;gap:8px;margin-top:12px}
+.foot button{flex:1;padding:11px;border-radius:11px;background:var(--card);
+  border:1px solid var(--line);font-size:12.5px;font-weight:650;color:var(--dim)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:60;
+  background:var(--card2);border:1px solid var(--line);border-radius:11px;
+  padding:10px 15px;font-size:13px;font-weight:650;box-shadow:0 8px 24px rgba(0,0,0,.5);
+  opacity:0;transition:opacity .18s;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+
+<div id="gate">
+  <div class="mark">
+    <img src="logo.png" alt="" onerror="this.remove()">
+    <h1>Pickleball at Berkeley</h1>
+    <div class="sub">Tryouts · Sept 12–13</div>
+  </div>
+  <div class="lbl">Passcode</div>
+  <input id="gpass" type="password" autocomplete="off" autocapitalize="none"
+         autocorrect="off" spellcheck="false" placeholder="ask an exec">
+  <div class="lbl">Who are you?</div>
+  <div class="who-grid" id="gwho"></div>
+  <div class="err" id="gerr"></div>
+  <button class="go" id="ggo" disabled>Start</button>
+</div>
+
+<div id="app" class="hide">
+  <header>
+    <img src="logo.png" alt="" onerror="this.remove()">
+    <div class="brand">Tryouts</div>
+    <div class="spacer"></div>
+    <button class="chip" id="sync"><i class="dot"></i><span>synced</span></button>
+    <button class="chip me" id="mechip">—</button>
+  </header>
+  <main id="view"></main>
+  <nav>
+    <button data-tab="checkin" class="on">Check in</button>
+    <button data-tab="eval">Eval</button>
+    <button data-tab="board">Board</button>
+  </nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+"use strict";
+var CFG = window.CFG;
+var BUCKETS = [
+  ['TOUR',   'Tourney', 4],
+  ['COMP',   'Comp',    3],
+  ['FENCE',  'Fence',   2],
+  ['SOCIAL', 'Social',  1],
+  ['NO',     'No',      0]
+];
+var BVAL = {}, BLABEL = {};
+BUCKETS.forEach(function (b) { BVAL[b[0]] = b[2]; BLABEL[b[0]] = b[1]; });
+
+var SESSIONS = [
+  { key: 'S1', label: 'Sat 2:00', day: 'sat' },
+  { key: 'S2', label: 'Sat 4:00', day: 'sat' },
+  { key: 'S3', label: 'Sat 6:00', day: 'sat' },
+  { key: 'S4', label: 'Sun 12:00', day: 'sun' },
+  { key: 'S5', label: 'Sun 1:45', day: 'sun' },
+  { key: 'S6', label: 'Sun 3:30', day: 'sun' }
+];
+
+/* players/votes = the server snapshot with the unsent queue replayed over it */
+var S = {
+  who: '', pass: '', tab: 'checkin', sess: '', q: '',
+  srv: { players: [], votes: [] }, players: [], votes: [], queue: [],
+  open: {}, noting: {}, net: 'wait', lastPull: 0, boardFilter: 'all'
+};
+
+function LS(k, v) {
+  try {
+    if (v === undefined) return localStorage.getItem('pab.' + k);
+    if (v === null) localStorage.removeItem('pab.' + k); else localStorage.setItem('pab.' + k, v);
+  } catch (e) { return null; }
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function uid() {
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+}
+function nowIso() { return new Date().toISOString().replace(/\.\d+Z$/, 'Z'); }
+function $(id) { return document.getElementById(id); }
+
+var toastT;
+function toast(msg) {
+  var t = $('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(function () { t.classList.remove('on'); }, 1900);
+}
+
+function pull() {
+  var u = CFG.BACKEND
+    ? CFG.BACKEND + '?action=bootstrap&pass=' + encodeURIComponent(S.pass)
+    : '/api/bootstrap?pass=' + encodeURIComponent(S.pass);
+  return fetch(u, { method: 'GET', redirect: 'follow' })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) {
+        var err = new Error(d.error || 'refused');
+        err.badPass = /passcode/i.test(d.error || '');
+        throw err;
+      }
+      S.srv = { players: d.players || [], votes: d.votes || [] };
+      if (d.sessions && d.sessions.length) SESSIONS = d.sessions;
+      LS('snap', JSON.stringify(S.srv));
+      S.lastPull = Date.now();
+      setNet('ok');
+      rebuild();
+      return d;
+    })
+    .catch(function (e) { setNet('bad'); throw e; });
+}
+
+var pushing = false;
+function push() {
+  if (pushing || !S.queue.length) return Promise.resolve();
+  pushing = true;
+  var batch = S.queue.slice(0, 60);
+  var body = JSON.stringify({ action: 'ops', pass: S.pass, ops: batch });
+  var u = CFG.BACKEND || '/api/ops';
+  /* no headers: keeps it a simple request, Apps Script can't answer a preflight */
+  return fetch(u, { method: 'POST', body: body, redirect: 'follow' })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) {
+        var err = new Error(d.error || 'refused');
+        err.badPass = /passcode/i.test(d.error || '');
+        throw err;
+      }
+      var done = {};
+      (d.applied || []).forEach(function (id) { done[id] = 1; });
+      (d.rejected || []).forEach(function (x) { done[x.op_id] = 1; });
+      if ((d.rejected || []).length) console.warn('rejected ops', d.rejected);
+      S.queue = S.queue.filter(function (o) { return !done[o.op_id]; });
+      LS('queue', JSON.stringify(S.queue));
+      setNet('ok');
+    })
+    .catch(function () { setNet('wait'); })
+    .then(function () { pushing = false; render(); });
+}
+
+function setNet(v) {
+  S.net = v;
+  var c = $('sync'), d = c.firstElementChild, t = c.lastElementChild;
+  d.className = 'dot' + (S.queue.length ? ' wait' : v === 'ok' ? '' : v === 'bad' ? ' bad' : ' wait');
+  t.textContent = S.queue.length ? S.queue.length + ' unsent'
+    : v === 'bad' ? 'no signal' : '';
+  c.classList.toggle('bare', !t.textContent);
+}
+
+function op(o) {
+  o.op_id = uid();
+  o.who = S.who;
+  o.ts = nowIso();
+  S.queue.push(o);
+  LS('queue', JSON.stringify(S.queue));
+  rebuild();
+  render();
+  push();
+}
+
+function rebuild() {
+  var by = {};
+  S.players = (S.srv.players || []).map(function (p) {
+    var c = {};
+    for (var k in p) c[k] = p[k];
+    by[c.id] = c;
+    return c;
+  });
+  S.votes = (S.srv.votes || []).slice();
+  var seen = {};
+  S.votes.forEach(function (v) { seen[v.op_id] = 1; });
+
+  S.queue.forEach(function (o) {
+    if (o.kind === 'checkin' && by[o.player_id]) by[o.player_id].present = o.present ? 1 : 0;
+    else if (o.kind === 'paid' && by[o.player_id]) by[o.player_id].paid = o.paid || 'paid';
+    else if (o.kind === 'vote' && !seen[o.op_id]) {
+      S.votes.push({ op_id: o.op_id, ts: o.ts, pid: o.player_id, who: o.who,
+                     bucket: o.bucket, value: BVAL[o.bucket], comment: o.comment || '' });
+    } else if (o.kind === 'player' && !by[o.player_id]) {
+      var np = { id: o.player_id, name: o.name, email: '', year: o.year || '',
+                 slot: o.slot || '', slot_label: o.slot_label || '', day: o.day || '',
+                 slot_seat: '', paid: o.paid || 'unknown', dupr: null, dupr_note: '',
+                 exp: '', note: o.note || '', source: 'walkup', present: 1 };
+      by[np.id] = np;
+      S.players.push(np);
+    }
+  });
+  S.players.sort(function (a, b) {
+    return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
+  });
+}
+
+/* latest row per (player, voter) wins; earlier ones stay as history */
+function voteMap() {
+  var m = {};
+  S.votes.forEach(function (v) {
+    var k = v.pid + '|' + v.who;
+    if (!m[k] || String(v.ts) >= String(m[k].ts)) m[k] = v;
+  });
+  var byP = {};
+  Object.keys(m).forEach(function (k) {
+    var v = m[k];
+    (byP[v.pid] = byP[v.pid] || []).push(v);
+  });
+  return byP;
+}
+
+function poolMean(byP) {
+  var s = 0, n = 0;
+  Object.keys(byP).forEach(function (p) {
+    byP[p].forEach(function (v) { s += Number(v.value); n++; });
+  });
+  return n ? s / n : 2;
+}
+
+function score(vs, prior) {
+  var s = 0;
+  vs.forEach(function (v) { s += Number(v.value); });
+  var k = Number(CFG.SHRINK_K) || 0;
+  return { n: vs.length, mean: s / vs.length, shrunk: (s + k * prior) / (vs.length + k) };
+}
+
+function nearestBucket(mean) {
+  var best = BUCKETS[0];
+  BUCKETS.forEach(function (b) {
+    if (Math.abs(b[2] - mean) < Math.abs(best[2] - mean)) best = b;
+  });
+  return best[0];
+}
+
+function currentSession() {
+  if (S.sess) return S.sess;
+  var d = new Date(), day = d.getDay(), h = d.getHours() + d.getMinutes() / 60;
+  if (day === 6) return h < 3.6 ? 'S1' : h < 5.6 ? 'S2' : 'S3';
+  if (day === 0) return h < 13.4 ? 'S4' : h < 15.3 ? 'S5' : 'S6';
+  return 'S1';
+}
+function inSession(p, k) { return p.slot === k; }
+function matches(p, q) {
+  if (!q) return true;
+  var n = p.name.toLowerCase(), e = (p.email || '').toLowerCase();
+  return q.split(/\s+/).every(function (t) {
+    return n.indexOf(t) >= 0 || e.indexOf(t) >= 0;
+  });
+}
+
+function segHTML(sel) {
+  return '<div class="seg">' + SESSIONS.map(function (s) {
+    return '<button data-sess="' + s.key + '" class="' + (s.key === sel ? 'on' : '') + '">'
+      + s.key + '<small>' + esc((s.label || '').replace(/^(Sat|Sun)\s*/, '')) + '</small></button>';
+  }).join('') + '</div>';
+}
+
+function payDot(p) {
+  var c = p.paid === 'paid' ? 'paid' : p.paid === 'unpaid' ? 'unpaid' : '';
+  var t = p.paid === 'paid' ? 'paid' : p.paid === 'unpaid' ? 'not paid' : 'payment unconfirmed';
+  return '<i class="pay ' + c + '" title="' + t + '"></i>';
+}
+
+function viewCheckin() {
+  var sel = currentSession(), q = S.q.toLowerCase().trim();
+  var pool = q ? S.players.filter(function (p) { return matches(p, q); })
+               : S.players.filter(function (p) { return inSession(p, sel); });
+  var slotted = S.players.filter(function (p) { return inSession(p, sel); });
+  var here = slotted.filter(function (p) { return p.present; }).length;
+  var owe = slotted.filter(function (p) { return p.present && p.paid !== 'paid'; }).length;
+
+  var h = segHTML(sel)
+    + '<input id="q" placeholder="Search by name" value="' + esc(S.q)
+    + '" autocomplete="off" autocorrect="off" spellcheck="false">'
+    + '<div class="count"><b>' + here + '</b> of ' + slotted.length + ' here'
+    + (owe ? '<span class="tag warn">' + owe + ' to collect</span>' : '')
+    + (q ? '<span class="spacer"></span><span>all ' + S.players.length + '</span>' : '')
+    + '</div><div class="list">';
+
+  if (!pool.length) h += '<div class="empty">'
+    + (!S.lastPull ? 'Loading…'
+       : q ? 'No one by that name.' : 'No one in this session.') + '</div>';
+
+  pool.forEach(function (p) {
+    var wrong = p.slot && p.slot !== sel;
+    var needPay = p.present && p.paid !== 'paid';
+    h += '<div class="wrap"><div class="row ' + (p.present ? 'on' : '') + '" data-ci="' + esc(p.id) + '">'
+      + '<div class="tick ' + (p.present ? 'on' : '') + '">' + (p.present ? '✓' : '') + '</div>'
+      + '<div class="grow"><div class="nm">' + esc(p.name) + '</div>'
+      + '<div class="sub">' + payDot(p)
+      + (p.year ? '<span>' + esc(p.year) + '</span>' : '')
+      + (wrong ? '<span class="tag warn">' + esc(p.slot) + '</span>'
+               : p.slot ? '' : '<span class="tag warn">no slot</span>')
+      + (p.source === 'slot' ? '<span class="tag">no form</span>' : '')
+      + '</div></div></div>';
+    if (needPay) {
+      h += '<div class="money"><span>$10</span><span class="grow">'
+        + (p.paid === 'unpaid' ? 'unpaid on the form' : 'not marked on the form')
+        + '</span><button data-paid="' + esc(p.id) + '">Collected</button></div>';
+    }
+    h += '</div>';
+  });
+
+  return h + '</div><button class="mini" id="walkup">+ Walk-up</button>';
+}
+
+function viewEval() {
+  var sel = currentSession(), q = S.q.toLowerCase().trim(), byP = voteMap();
+  var pool = S.players.filter(function (p) {
+    return q ? matches(p, q) : (inSession(p, sel) && p.present);
+  });
+  var mine = function (p) {
+    return (byP[p.id] || []).filter(function (v) { return v.who === S.who; })[0];
+  };
+  /* unrated first, but frozen per session or cards jump as you vote */
+  if (!q) {
+    var key = sel + '|' + S.players.length;
+    if (S._orderKey !== key) {
+      S._orderKey = key;
+      S._order = pool.slice().sort(function (a, b) {
+        var am = mine(a) ? 1 : 0, bm = mine(b) ? 1 : 0;
+        return am !== bm ? am - bm : (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);
+      }).map(function (p) { return p.id; });
+    }
+    var rank = {};
+    S._order.forEach(function (id, i) { rank[id] = i; });
+    pool.sort(function (a, b) {
+      var ar = rank[a.id], br = rank[b.id];
+      if (ar === undefined) ar = 1e9;            // newly checked in -> bottom
+      if (br === undefined) br = 1e9;
+      return ar - br || (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);
+    });
+  }
+  var done = pool.filter(mine).length;
+
+  var h = segHTML(sel)
+    + '<input id="q" placeholder="Search by name" value="' + esc(S.q)
+    + '" autocomplete="off" autocorrect="off" spellcheck="false">'
+    + '<div class="count"><b>' + done + '</b> of ' + pool.length + ' done</div>'
+    + '<div class="list">';
+
+  if (!pool.length) {
+    h += '<div class="empty">' + (!S.lastPull ? 'Loading…'
+      : q ? 'No one by that name.' : 'Check people in first.') + '</div>';
+  }
+
+  pool.forEach(function (p) {
+    var all = byP[p.id] || [], my = mine(p);
+    var others = all.filter(function (v) { return v.who !== S.who; });
+    var show = !CFG.BLIND || my;
+    h += '<div class="card ' + (my ? 'voted' : '') + '">'
+      + '<div class="chead"><div class="grow"><div class="nm">' + esc(p.name) + '</div>'
+      + '<div class="sub">' + (p.year ? '<span>' + esc(p.year) + '</span>' : '')
+      + (p.dupr ? '<span class="tag">DUPR ' + esc(p.dupr) + '</span>' : '')
+      + (p.slot && p.slot !== sel ? '<span class="tag warn">' + esc(p.slot) + '</span>' : '')
+      + '</div></div>'
+      + (show && others.length ? '<div class="sub">' + bar(all) + '</div>' : '')
+      + '</div><div class="pills" data-vote="' + esc(p.id) + '">'
+      + BUCKETS.map(function (b) {
+          return '<button data-b="' + b[0] + '" class="' + (my && my.bucket === b[0] ? 'on' : '') + '">'
+            + b[1] + '</button>';
+        }).join('')
+      + '</div>';
+    if (my) {
+      if (S.noting[p.id]) {
+        h += '<div class="note"><input data-noteinput="' + esc(p.id) + '" maxlength="140" '
+          + 'placeholder="note" value="' + esc(my.comment || '') + '">'
+          + '<button data-savenote="' + esc(p.id) + '">Save</button></div>';
+      } else {
+        h += '<div class="after"><button data-note="' + esc(p.id) + '">'
+          + (my.comment ? '“' + esc(my.comment) + '”' : '+ note') + '</button>'
+          + '<span class="spacer"></span>'
+          + (show && others.length ? '<span>' + others.length + ' other'
+              + (others.length > 1 ? 's' : '') + '</span>' : '')
+          + '</div>';
+      }
+    } else if (CFG.BLIND && others.length) {
+      h += '<div class="after"><span>' + others.length + ' voted, hidden until you do</span></div>';
+    }
+    h += '</div>';
+  });
+  return h + '</div>';
+}
+
+function bar(vs) {
+  var c = {};
+  vs.forEach(function (v) { c[v.bucket] = (c[v.bucket] || 0) + 1; });
+  return '<span class="bar">' + BUCKETS.map(function (b) {
+    var n = c[b[0]] || 0;
+    return n ? '<i class="' + b[0] + '" style="width:' + (100 * n / vs.length) + '%"></i>' : '';
+  }).join('') + '</span>';
+}
+
+function viewBoard() {
+  var byP = voteMap(), prior = poolMean(byP), f = S.boardFilter;
+  var rows = [], unrated = 0;
+  S.players.forEach(function (p) {
+    if (f !== 'all') {
+      if ((f === 'sat' || f === 'sun') ? p.day !== f : p.slot !== f) return;
+    }
+    var vs = byP[p.id] || [];
+    if (!vs.length) { unrated++; return; }
+    var sc = score(vs, prior);
+    var vals = vs.map(function (v) { return Number(v.value); });
+    rows.push({ p: p, vs: vs, n: sc.n, mean: sc.mean, shrunk: sc.shrunk,
+                spread: Math.max.apply(null, vals) - Math.min.apply(null, vals) });
+  });
+  rows.sort(function (a, b) { return b.shrunk - a.shrunk || b.n - a.n; });
+
+  var filters = [['all', 'All'], ['sat', 'Sat'], ['sun', 'Sun']]
+    .concat(SESSIONS.map(function (s) { return [s.key, s.key]; }));
+  var h = '<div class="seg">' + filters.map(function (x) {
+      return '<button data-bf="' + x[0] + '" class="' + (f === x[0] ? 'on' : '') + '">'
+        + x[1] + '</button>';
+    }).join('') + '</div>'
+    + '<div class="count"><b>' + rows.length + '</b> rated'
+    + (unrated ? '<span class="spacer"></span><span>' + unrated + ' not yet</span>' : '')
+    + '</div><div class="list">';
+
+  if (!rows.length) h += '<div class="empty">No votes yet.</div>';
+
+  rows.forEach(function (r, i) {
+    var open = S.open[r.p.id];
+    h += '<div class="card"><div class="row" style="padding:0;border:0;background:none" '
+      + 'data-open="' + esc(r.p.id) + '">'
+      + '<div class="rank mono">' + (i + 1) + '</div>'
+      + '<div class="grow"><div class="nm">' + esc(r.p.name) + '</div>'
+      /* show what we sort by: a raw 4.00 under a 3.67 reads as a bug */
+      + '<div class="sub"><span class="mono">' + r.shrunk.toFixed(2) + '</span>'
+      + '<span>' + r.n + ' vote' + (r.n > 1 ? 's' : '') + '</span>'
+      + (r.spread >= 2 ? '<span class="tag warn">split</span>' : '')
+      + '</div></div>'
+      + '<span class="verd ' + nearestBucket(r.mean) + '">'
+      + BLABEL[nearestBucket(r.mean)].toUpperCase() + '</span></div>';
+    if (open) {
+      h += '<div class="det"><div class="vr"><span class="vw">spread</span>'
+        + bar(r.vs) + '<span class="vc">avg ' + r.mean.toFixed(2)
+        + (r.p.dupr ? ' · DUPR ' + esc(r.p.dupr) : '') + '</span></div>'
+        + r.vs.slice().sort(function (a, b) { return b.value - a.value; })
+        .map(function (v) {
+          return '<div class="vr"><span class="vw">' + esc(v.who) + '</span>'
+            + '<span class="verd ' + v.bucket + '">' + BLABEL[v.bucket].toUpperCase() + '</span>'
+            + '<span class="vc">' + esc(v.comment || '') + '</span></div>';
+        }).join('')
+        + (r.p.exp ? '<div class="vc" style="white-space:normal;margin-top:4px">'
+            + esc(r.p.exp) + '</div>' : '')
+        + '</div>';
+    }
+    h += '</div>';
+  });
+
+  return h + '</div>'
+    + '<div class="legend">Sorted by average vote. One or two votes get pulled'
+    + ' toward the middle. Tap a row for who said what.</div>'
+    + '<div class="foot"><button id="csv">Export CSV</button>'
+    + '<button id="refresh">Refresh</button></div>';
+}
+
+function render() {
+  $('mechip').textContent = S.who || '—';
+  setNet(S.net);
+  var v = $('view'), q = v.querySelector('#q');
+  var focus = q && document.activeElement === q, cur = q ? q.selectionStart : 0;
+  v.innerHTML = S.tab === 'checkin' ? viewCheckin()
+              : S.tab === 'eval' ? viewEval() : viewBoard();
+  var nq = v.querySelector('#q');
+  if (nq && focus) { nq.focus(); try { nq.setSelectionRange(cur, cur); } catch (e) {} }
+  Array.prototype.forEach.call(document.querySelectorAll('nav button'), function (b) {
+    b.classList.toggle('on', b.dataset.tab === S.tab);
+  });
+}
+
+document.addEventListener('click', function (e) {
+  var t = e.target.closest('[data-tab],[data-sess],[data-ci],[data-paid],[data-vote] button,'
+    + '[data-note],[data-savenote],[data-open],[data-bf],#walkup,#csv,#refresh,#mechip,#sync');
+  if (!t) return;
+  var d = t.dataset;
+
+  if (d.tab) { S.tab = d.tab; S.q = ''; S._orderKey = ''; return render(); }
+  if (d.sess) { S.sess = d.sess; S._orderKey = ''; return render(); }
+  if (d.bf) { S.boardFilter = d.bf; return render(); }
+
+  if (d.ci) {
+    var p = S.players.filter(function (x) { return x.id === d.ci; })[0];
+    if (!p) return;
+    op({ kind: 'checkin', player_id: p.id, present: p.present ? 0 : 1 });
+    return toast(p.name.split(' ')[0] + (p.present ? ' out' : ' in'));
+  }
+  if (d.paid) {
+    op({ kind: 'paid', player_id: d.paid, paid: 'paid', method: 'door' });
+    return toast('$10 in');
+  }
+  if (t.parentElement && t.parentElement.dataset.vote) {
+    op({ kind: 'vote', player_id: t.parentElement.dataset.vote, bucket: d.b, comment: '' });
+    return toast(BLABEL[d.b]);
+  }
+  if (d.note) { S.noting[d.note] = 1; return render(); }
+  if (d.savenote) {
+    var inp = document.querySelector('[data-noteinput="' + d.savenote.replace(/"/g, '\\"') + '"]');
+    var my = (voteMap()[d.savenote] || []).filter(function (v) { return v.who === S.who; })[0];
+    delete S.noting[d.savenote];
+    if (my) op({ kind: 'vote', player_id: d.savenote, bucket: my.bucket,
+                 comment: inp ? inp.value.trim() : '' });
+    return render();
+  }
+  if (d.open) {
+    if (S.open[d.open]) delete S.open[d.open]; else S.open[d.open] = 1;
+    return render();
+  }
+  if (t.id === 'walkup') return walkup();
+  if (t.id === 'csv') return exportCsv();
+  if (t.id === 'refresh') return pull().then(render).catch(function () {
+    toast("can't reach the data"); });
+  if (t.id === 'sync') { push(); return pull().then(render).catch(function () {}); }
+  if (t.id === 'mechip') return switchWho();
+});
+
+document.addEventListener('input', function (e) {
+  if (e.target.id === 'q') { S.q = e.target.value; render(); }
+});
+
+function walkup() {
+  var name = prompt('Name?');
+  if (!name || !name.trim()) return;
+  var sel = currentSession();
+  var s = SESSIONS.filter(function (x) { return x.key === sel; })[0] || {};
+  var pid = 'w:' + uid();
+  op({ kind: 'player', player_id: pid, name: name.trim(), slot: sel,
+       slot_label: s.label || '', day: s.day || '', paid: 'unknown',
+       note: 'walk-up' });
+  op({ kind: 'checkin', player_id: pid, present: 1 });
+  toast(name.trim() + ' added');
+}
+
+function switchWho() {
+  var names = CFG.EXEC;
+  var pick = prompt('Who is using this phone?\n' + names.join(' · '), S.who);
+  if (!pick) return;
+  var hit = names.filter(function (n) { return n.toLowerCase() === pick.trim().toLowerCase(); })[0];
+  if (!hit) return toast('not on the list');
+  S.who = hit;
+  LS('who', hit);
+  render();
+}
+
+function exportCsv() {
+  var names = {};
+  S.players.forEach(function (p) { names[p.id] = p.name; });
+  var rows = [['ts', 'player_id', 'name', 'voter', 'bucket', 'value', 'comment']];
+  S.votes.slice().sort(function (a, b) { return String(a.ts) < String(b.ts) ? -1 : 1; })
+    .forEach(function (v) {
+      rows.push([v.ts, v.pid, names[v.pid] || '?', v.who, v.bucket, v.value, v.comment || '']);
+    });
+  var csv = rows.map(function (r) {
+    return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'tryout_votes_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function () { /* fine without it */ });
+}
+
+function backToGate(msg) {
+  LS('pass', null);
+  S.pass = '';
+  $('app').classList.add('hide');
+  $('gate').classList.remove('hide');
+  $('gerr').textContent = msg || '';
+  var f = $('gpass');
+  if (f) { f.value = ''; f.focus(); }
+}
+
+function start() {
+  $('gate').classList.add('hide');
+  $('app').classList.remove('hide');
+  try { S.srv = JSON.parse(LS('snap') || '{"players":[],"votes":[]}'); } catch (e) {}
+  try { S.queue = JSON.parse(LS('queue') || '[]'); } catch (e) {}
+  rebuild();
+  render();
+  pull().then(render).catch(function (e) {
+    if (e && e.badPass) return backToGate('That passcode is not right.');
+    if (!S.players.length) toast('no signal, nothing saved on this phone yet');
+  });
+  setInterval(function () {
+    push();                       // always: a vote tapped just before the phone
+    if (document.hidden) return;  // went in a pocket should not sit unsent
+    if (!S.lastPull || Date.now() - S.lastPull > (CFG.POLL_SEC || 30) * 1000) {
+      pull().then(render).catch(function (e) {
+        if (e && e.badPass) backToGate('The passcode changed. Ask an exec.');
+      });
+    }
+  }, 4000);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) { push(); pull().then(render).catch(function () {}); }
+  });
+  window.addEventListener('online', function () { push(); });
+}
+
+(function gate() {
+  var who = LS('who') || '', pass = LS('pass') || '';
+
+  var local = /^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname);
+  if (!CFG.BACKEND && !local && location.protocol !== 'file:') {
+    $('gerr').textContent = 'BACKEND is not set in config.js, so there is no data '
+      + 'to load. Paste the Apps Script /exec URL in and redeploy.';
+  }
+  $('gwho').innerHTML = CFG.EXEC.map(function (n) {
+    return '<button data-w="' + esc(n) + '">' + esc(n) + '</button>';
+  }).join('');
+  if (pass) $('gpass').value = pass;
+
+  function refresh() {
+    Array.prototype.forEach.call($('gwho').children, function (b) {
+      b.classList.toggle('on', b.dataset.w === who);
+    });
+    $('ggo').disabled = !(who && $('gpass').value.trim());
+  }
+  $('gwho').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-w]');
+    if (b) { who = b.dataset.w; refresh(); }
+  });
+  $('gpass').addEventListener('input', refresh);
+  $('ggo').addEventListener('click', function () {
+    S.who = who;
+    S.pass = $('gpass').value.trim();
+    LS('who', S.who);
+    LS('pass', S.pass);
+    $('gerr').textContent = '';
+    start();
+  });
+  refresh();
+  if (who && pass) { S.who = who; S.pass = pass; start(); }
+})();
+</script>
